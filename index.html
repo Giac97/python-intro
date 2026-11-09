@@ -2,10 +2,377 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Scientific Python Basics</title>
-  <meta http-equiv="refresh" content="0; url=intro_presentation_refined.html">
+  <meta name="description" content="Scientific Python Basics: an introduction to Python, NumPy, Matplotlib, SciPy, pandas, scikit-learn and Jupyter. Slides by Giacomo Becatti.">
+  <meta property="og:title" content="Scientific Python Basics">
+  <meta property="og:description" content="An introduction to the scientific Python stack: NumPy, Matplotlib, SciPy, pandas, scikit-learn and Jupyter.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23282a36'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='15' font-weight='700' text-anchor='middle' fill='%23bd93f9'%3E%3E_%3C/text%3E%3C/svg%3E">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #282a36;
+      --bg-soft: #21222c;
+      --surface: #303241;
+      --border: #44475a;
+      --text: #f8f8f2;
+      --muted: #a4a8c4;
+      --accent: #bd93f9;
+      --pink: #ff79c6;
+      --green: #50fa7b;
+      --cyan: #8be9fd;
+      --orange: #ffb86c;
+      --yellow: #f1fa8c;
+      --mono: ui-monospace, "JetBrains Mono", "Fira Code", "SFMono-Regular", Menlo, Consolas, monospace;
+      --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        color-scheme: light;
+        --bg: #fbfaf5;
+        --bg-soft: #f2f0e6;
+        --surface: #ffffff;
+        --border: #dcd9c9;
+        --text: #1f1f28;
+        --muted: #5c5f73;
+        --accent: #6c3fc9;
+        --pink: #b5267d;
+        --green: #157a35;
+        --cyan: #0b6e86;
+        --orange: #a65400;
+        --yellow: #7a6f00;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 17px;
+      line-height: 1.6;
+    }
+    a { color: var(--accent); }
+    a:focus-visible, .btn:focus-visible, .card:focus-visible {
+      outline: 2px solid var(--pink);
+      outline-offset: 3px;
+    }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+
+    /* ---------- hero ---------- */
+    header.hero {
+      padding: 72px 0 56px;
+      border-bottom: 1px solid var(--border);
+      background:
+        radial-gradient(900px 380px at 85% -10%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%),
+        radial-gradient(700px 300px at -10% 110%, color-mix(in srgb, var(--pink) 10%, transparent), transparent 70%);
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: center;
+    }
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--green);
+      letter-spacing: 0.02em;
+      margin: 0 0 14px;
+    }
+    h1 {
+      font-size: clamp(2.3rem, 5vw, 3.4rem);
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+      margin: 0 0 18px;
+    }
+    h1 span { color: var(--accent); }
+    .lede { color: var(--muted); font-size: 1.1rem; margin: 0 0 28px; max-width: 34em; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 11px 17px;
+      border-radius: 10px;
+      font-weight: 600;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      color: var(--text);
+      background: var(--surface);
+      transition: transform .15s ease, border-color .15s ease;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: var(--accent); }
+    .btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--bg);
+    }
+    .btn svg { width: 18px; height: 18px; flex: none; }
+
+    /* code window */
+    .term {
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 20px 50px -20px rgba(0,0,0,.45);
+      min-width: 0;
+    }
+    .term-bar { display: flex; gap: 7px; padding: 12px 14px; border-bottom: 1px solid var(--border); }
+    .term-bar i { width: 11px; height: 11px; border-radius: 50%; background: var(--border); display: block; }
+    .term-bar i:nth-child(1) { background: #ff5555; }
+    .term-bar i:nth-child(2) { background: #f1fa8c; }
+    .term-bar i:nth-child(3) { background: #50fa7b; }
+    .term pre {
+      margin: 0;
+      padding: 18px 20px 22px;
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      line-height: 1.7;
+      overflow-x: auto;
+    }
+    .k { color: var(--pink); }
+    .f { color: var(--green); }
+    .s { color: var(--yellow); }
+    .n { color: var(--accent); }
+    .c { color: var(--muted); font-style: italic; }
+    .o { color: var(--cyan); }
+
+    /* ---------- sections ---------- */
+    section.block { padding: 60px 0 8px; }
+    h2 {
+      font-size: 1.5rem;
+      letter-spacing: -0.01em;
+      margin: 0 0 6px;
+    }
+    .sub { color: var(--muted); margin: 0 0 28px; }
+
+    .cards {
+      list-style: none; padding: 0; margin: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 16px;
+      counter-reset: part;
+    }
+    .card {
+      display: block;
+      height: 100%;
+      padding: 20px 22px 22px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color .15s ease, transform .15s ease;
+      position: relative;
+    }
+    .card:hover { border-color: var(--hue, var(--accent)); transform: translateY(-2px); }
+    .card .num {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--hue, var(--accent));
+    }
+    .card h3 { margin: 4px 0 8px; font-size: 1.15rem; }
+    .card p { margin: 0; color: var(--muted); font-size: 0.95rem; line-height: 1.5; }
+    .card .go {
+      position: absolute; top: 20px; right: 20px;
+      color: var(--muted);
+      transition: color .15s ease, transform .15s ease;
+    }
+    .card:hover .go { color: var(--hue, var(--accent)); transform: translateX(3px); }
+
+    /* keys */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 22px;
+    }
+    .panel h3 { margin: 0 0 12px; font-size: 1.05rem; }
+    .keys { list-style: none; margin: 0; padding: 0; }
+    .keys li {
+      display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
+      padding: 7px 0;
+      border-top: 1px dashed var(--border);
+      font-size: 0.95rem;
+    }
+    .keys li:first-child { border-top: 0; }
+    .keys span { color: var(--muted); text-align: right; }
+    kbd {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      padding: 2px 7px;
+      border: 1px solid var(--border);
+      border-bottom-width: 2px;
+      border-radius: 6px;
+      background: var(--bg-soft);
+      white-space: nowrap;
+    }
+    .panel ul.plain { margin: 0; padding-left: 1.1em; }
+    .panel ul.plain li { margin: 4px 0; }
+    .panel ul.plain li::marker { color: var(--accent); }
+    code {
+      font-family: var(--mono);
+      font-size: 0.88em;
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 1px 5px;
+      overflow-wrap: anywhere;
+    }
+
+    footer {
+      margin-top: 64px;
+      padding: 28px 0 40px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; }
+
+    @media (max-width: 820px) {
+      header.hero { padding: 48px 0 40px; }
+      .hero-grid { grid-template-columns: 1fr; gap: 32px; }
+      .two-col { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+      .wrap { padding: 0 16px; }
+      .btn { flex: 1 1 100%; justify-content: center; }
+      .term pre { font-size: 0.78rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; }
+    }
+  </style>
 </head>
 <body>
-  <p><a href="intro_presentation_refined.html">Open the presentation</a></p>
+
+  <header class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="eyebrow">&gt;&gt;&gt; import scientific_python</p>
+        <h1>Scientific Python <span>Basics</span></h1>
+        <p class="lede">
+          A hands-on introduction to the scientific Python stack, from the
+          language itself to NumPy, Matplotlib, SciPy, pandas and scikit-learn,
+          with examples from chemistry and physics.
+        </p>
+        <div class="actions">
+          <a class="btn primary" href="intro_presentation_refined.html">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>
+            Open the slides
+          </a>
+          <a class="btn" href="intro_presentation_refined.html?print-pdf" title="Opens a print layout: use your browser's Print → Save as PDF">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg>
+            Print / PDF
+          </a>
+          <a class="btn" href="https://github.com/Giac97/python-intro">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg>
+            Source
+          </a>
+        </div>
+      </div>
+
+      <div class="term" aria-label="Example Python code">
+        <div class="term-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+<pre><span class="k">import</span> numpy <span class="k">as</span> np
+<span class="k">from</span> scipy.integrate <span class="k">import</span> solve_ivp
+
+<span class="c"># A → B → C, first-order kinetics</span>
+<span class="k">def</span> <span class="f">rates</span>(t, c, k1<span class="o">=</span><span class="n">1.0</span>, k2<span class="o">=</span><span class="n">0.5</span>):
+    a, b, _ <span class="o">=</span> c
+    <span class="k">return</span> [<span class="o">-</span>k1<span class="o">*</span>a, k1<span class="o">*</span>a <span class="o">-</span> k2<span class="o">*</span>b, k2<span class="o">*</span>b]
+
+t <span class="o">=</span> np.<span class="f">linspace</span>(<span class="n">0</span>, <span class="n">10</span>, <span class="n">200</span>)
+sol <span class="o">=</span> <span class="f">solve_ivp</span>(rates, (<span class="n">0</span>, <span class="n">10</span>), [<span class="n">1</span>, <span class="n">0</span>, <span class="n">0</span>], t_eval<span class="o">=</span>t)</pre>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="block" aria-labelledby="contents">
+      <div class="wrap">
+        <h2 id="contents">What's inside</h2>
+        <p class="sub">Seven parts. Click one to jump straight to it in the slides.</p>
+
+        <ol class="cards">
+          <li><a class="card" style="--hue: var(--green)" href="intro_presentation_refined.html#/some-fundamentals">
+            <span class="num">01</span><span class="go" aria-hidden="true">→</span>
+            <h3>Some Fundamentals</h3>
+            <p>What Python is, the scientific stack, coming from Fortran or R, Python in one slide, and three classic traps.</p>
+          </a></li>
+          <li><a class="card" style="--hue: var(--cyan)" href="intro_presentation_refined.html#/numpy">
+            <span class="num">02</span><span class="go" aria-hidden="true">→</span>
+            <h3>NumPy</h3>
+            <p>Why not plain lists, creating arrays, indexing, views vs copies, broadcasting and basic file I/O.</p>
+          </a></li>
+          <li><a class="card" style="--hue: var(--pink)" href="intro_presentation_refined.html#/matplotlib">
+            <span class="num">03</span><span class="go" aria-hidden="true">→</span>
+            <h3>Matplotlib</h3>
+            <p>Anatomy of a figure, your first plot, multiple panels, the plots you'll actually need, and saving figures.</p>
+          </a></li>
+          <li><a class="card" style="--hue: var(--orange)" href="intro_presentation_refined.html#/scipy">
+            <span class="num">04</span><span class="go" aria-hidden="true">→</span>
+            <h3>SciPy</h3>
+            <p>Physical constants, solving ODEs (A&nbsp;→&nbsp;B&nbsp;→&nbsp;C), fitting models to data, and special functions.</p>
+          </a></li>
+          <li><a class="card" style="--hue: var(--yellow)" href="intro_presentation_refined.html#/pandas">
+            <span class="num">05</span><span class="go" aria-hidden="true">→</span>
+            <h3>pandas</h3>
+            <p>Reading a table from a file, then selecting and working with columns and rows.</p>
+          </a></li>
+          <li><a class="card" style="--hue: var(--accent)" href="intro_presentation_refined.html#/scikit-learn">
+            <span class="num">06</span><span class="go" aria-hidden="true">→</span>
+            <h3>scikit-learn</h3>
+            <p>The estimator interface, train/test splits, alkane boiling points, overfitting, and why ML is hard.</p>
+          </a></li>
+          <li><a class="card" style="--hue: var(--green)" href="intro_presentation_refined.html#/jupyter-notebooks">
+            <span class="num">07</span><span class="go" aria-hidden="true">→</span>
+            <h3>Jupyter Notebooks</h3>
+            <p>Markdown cells, the hidden-state trap, keyboard shortcuts, where to run notebooks, and the hands-on exercise.</p>
+          </a></li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="using">
+      <div class="wrap">
+        <h2 id="using">Getting around</h2>
+        <p class="sub">The slides run in any modern browser. Nothing to install.</p>
+
+        <div class="two-col">
+          <div class="panel">
+            <h3>Navigating the slides</h3>
+            <ul class="keys">
+              <li><div><kbd>→</kbd> / <kbd>Space</kbd></div><span>next slide</span></li>
+              <li><div><kbd>↓</kbd> / <kbd>↑</kbd></div><span>move within a section</span></li>
+              <li><div><kbd>Esc</kbd></div><span>overview of all slides</span></li>
+              <li><div><kbd>M</kbd></div><span>table of contents menu</span></li>
+              <li><div><kbd>F</kbd></div><span>fullscreen</span></li>
+              <li><div><kbd>?</kbd></div><span>all shortcuts</span></li>
+            </ul>
+          </div>
+          <div class="panel">
+            <h3>Following along</h3>
+            <ul class="plain">
+              <li>Every code block on the slides has a copy button, so you can paste it straight into a notebook.</li>
+              <li>Run it in <strong>JupyterLab</strong> or <strong>VS Code</strong>, on <strong>Google Colab</strong> with nothing to install, or on the course <strong>JupyterHub</strong>.</li>
+              <li>Hands-on exercise: <code>NB_CII-ML_is_difficult_exercise.ipynb</code></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© 2026 Giacomo Becatti</span>
+      <span>Slides built with <a href="https://quarto.org">Quarto</a> &amp; reveal.js</span>
+    </div>
+  </footer>
+
 </body>
 </html>

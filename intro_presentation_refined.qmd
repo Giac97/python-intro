@@ -1,0 +1,1602 @@
+---
+author: "Giacomo Becatti"
+title: Scientific Python Basics
+jupyter: python3
+
+format:
+  revealjs:
+    theme: dracula
+    navigation-mode: grid
+    slide-number: true
+    code-line-numbers: false
+    fig-width: 6
+    fig-height: 3.5
+    scrollable: true
+    code-overflow: wrap
+    code-block-height: 620px
+    include-in-header:
+      - text: |
+          <style>
+          /* long lines wrap with a hanging indent instead of running off the slide */
+          .reveal pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
+          /* code + output side by side: give the code more room and a smaller font */
+          .reveal .column-output-location > .column:first-child { width: 58% !important; }
+          .reveal .column-output-location > .column:last-child  { width: 40% !important; }
+          .reveal .columns pre code { font-size: 0.82em; line-height: 1.35; }
+          /* tighter vertical rhythm so code + output fit without scrolling */
+          .reveal div.sourceCode, .reveal .cell-output pre { margin-top: 0.3em; margin-bottom: 0.3em; }
+          .reveal table { font-size: 0.8em; }
+          /* body text a bit smaller than the theme default (code size unchanged) */
+          .reveal .slides section li, .reveal .slides section > p,
+          .reveal .slides section > .fragment > p { font-size: 0.85em; }
+          .reveal .slides section li li { font-size: 1em; }
+          .reveal #refs { font-size: 0.6em; }
+          /* Markdown-cell preview boxes */
+          .md-preview { border-left: 4px solid #bd93f9; padding: 0.4em 0.8em;
+                        background: rgba(255,255,255,0.04); font-size: 0.75em; }
+          .md-preview .md-h { font-size: 1.35em; font-weight: bold; display: block; }
+          </style>
+bibliography: references.bib
+toc: true
+toc-depth: 1
+echo: true
+---
+
+```{python}
+#| echo: false
+import matplotlib.pyplot as plt
+plt.style.use("dark_background")   # matches the dracula theme
+```
+
+# Some Fundamentals
+
+## What is Python?
+
+:::: {.panel-tabset}
+
+## Specifics
+::: {.incremental}
+- Python is
+    - a **high-level** programming language: you think about the problem, not memory
+    - an **interpreted** language: no compile step, run line by line
+    - **dynamically typed**: variables don't declare a type
+
+- Slow on its own, fast when it calls compiled libraries
+- That trade-off is the whole story of scientific Python
+:::
+
+## About
+::: {.incremental}
+- Conceived in the 80s by Guido van Rossum (former BDFL) as a successor to ABC
+- First released in 1991
+- Name comes from *Monty Python's Flying Circus*, not snakes (despite the symbolism <img src="Python-logo-notext.svg" alt="Python logo" style="height: 1em; vertical-align: middle;">)
+
+::::: {.r-stack}
+![](monty-python.jpg){.fragment width="360" height="240"}
+:::::
+
+:::
+::::
+
+## The scientific stack
+
+Don't reinvent the wheel: each of these is decades of tested code
+
+::: {.incremental}
+- **NumPy**: arrays, vectors, matrices, fast math [@harris2020array]
+- **SciPy**: ODEs, fitting, integration, statistics [@virtanen2020scipy]
+- **Matplotlib**: figures [@hunter2007matplotlib]
+- **pandas**: labelled tables, CSV/Excel [@mckinney2010pandas]
+- **scikit-learn**: regression, classification [@pedregosa2011scikit]
+- **Jupyter**: interactive notebooks [@kluyver2016jupyter]
+:::
+
+## If you know Fortran or R {auto-animate="true"}
+
+- Syntax
+
+| | Fortran | R | Python |
+|---|---|---|---|
+| First element | `a(1)` | `a[1]` | `a[0]` |
+| Loop 1..10 | `do i = 1, 10` | `for (i in 1:10)` | `for i in range(1, 11):` |
+| Blocks | `end do` | `{ }` | **indentation** |
+| Comment | `! note` | `# note` | `# note` |
+
+## If you know Fortran or R {auto-animate="true"}
+
+- Arithmetic and memory
+
+| | Fortran | R | Python |
+|---|---|---|---|
+| Power | `x**2` | `x^2` | `x**2` |
+| Integer division | `-7/2` → `-3` | `-7 %/% 2` → `-4` | `-7 // 2` → `-4` |
+| Array storage | column-major | column-major | row-major (NumPy) |
+
+## Python in one slide {auto-animate="true"}
+
+- Numbers
+```{python}
+R = 8.314                          # numbers
+```
+
+## Python in one slide {auto-animate="true"}
+
+- Lists: ordered and mutable
+```{python}
+R = 8.314                          # numbers
+temps = [280, 290, 300]            # list: ordered, mutable
+```
+
+## Python in one slide {auto-animate="true"}
+
+- Dictionaries: look things up by name
+```{python}
+R = 8.314                          # numbers
+temps = [280, 290, 300]            # list: ordered, mutable
+mass = {"C": 12.011, "O": 15.999}  # dict: key -> value
+```
+
+## Python in one slide {auto-animate="true"}
+
+- Functions: indentation defines the block
+```{python}
+R = 8.314                          # numbers
+temps = [280, 290, 300]            # list: ordered, mutable
+mass = {"C": 12.011, "O": 15.999}  # dict: key -> value
+
+def molar_mass(formula):           # indentation = block
+    return sum(mass[el] * n for el, n in formula.items())
+```
+
+## Python in one slide {auto-animate="true"}
+
+- f-strings: formatted output
+```{python}
+R = 8.314                          # numbers
+temps = [280, 290, 300]            # list: ordered, mutable
+mass = {"C": 12.011, "O": 15.999}  # dict: key -> value
+
+def molar_mass(formula):           # indentation = block
+    return sum(mass[el] * n for el, n in formula.items())
+
+M_co2 = molar_mass({"C": 1, "O": 2})
+print(f"CO2: {M_co2:.3f} g/mol, first T = {temps[0]} K")
+```
+
+## Three classic traps {auto-animate="true"}
+
+- Define a list
+```{python}
+a = [1, 2, 3]
+```
+
+## Three classic traps {auto-animate="true"}
+
+- Think you are creating a copy
+```{python}
+a = [1, 2, 3]
+b = a          # NOT a copy: same object, two names
+
+```
+
+## Three classic traps {auto-animate="true"}
+
+- Think you are modifying only a copy
+```{python}
+a = [1, 2, 3]
+b = a          # NOT a copy: same object, two names
+b[0] = 99
+```
+
+## Three classic traps {auto-animate="true"}
+
+- Realize (hopefully) your mistake
+```{python}
+a = [1, 2, 3]
+b = a          # NOT a copy: same object, two names
+b[0] = 99
+print(a)
+```
+
+## Three classic traps {auto-animate="true"}
+
+- Ask for a copy when you want one
+```{python}
+a = [1, 2, 3]
+b = a.copy()   # a real copy: a new object
+b[0] = 99
+print(a, b)
+```
+
+## Three classic traps {auto-animate="true"}
+
+- True vs. floor division (`/` or `//`)
+```{python}
+print(7 / 2, 7 // 2)   # true vs floor division
+print(-7 // 2)         # floors towards -inf: -4 (Fortran gives -3)
+```
+
+## Three classic traps {auto-animate="true"}
+
+- Power operator (`**`) vs. XOR (`^`)
+```{python}
+print(2 ** 3, 2 ^ 3)   # ^ is bitwise XOR, not power
+```
+
+## Three classic traps {auto-animate="true"}
+
+::: {.incremental}
+- Copy vs. same object: `b = a` is a second name, `a.copy()` is a copy
+- True vs. floor division: `/` always gives a float, `//` floors
+- Power vs. XOR: `**` is power, `^` is XOR
+:::
+
+```{python}
+a = [1, 2, 3]
+b = a          # NOT a copy: same object, two names
+b[0] = 99
+print(a)
+
+print(7 / 2, 7 // 2)   # true vs floor division
+print(2 ** 3, 2 ^ 3)   # ^ is bitwise XOR, not power
+```
+
+
+# NumPy
+:::{.incremental}
+- The fundamental package for scientific computing in Python [@harris2020array]
+- Provides
+    - a multidimensional array object and derived objects
+    - an assortment of routines for fast operations on arrays
+:::
+
+## Why not plain lists? {auto-animate="true"}
+
+- Compute $e^{-0.25\,t}$ on a million points, once with a Python loop
+```{python}
+import math, time
+import numpy as np
+
+t = np.linspace(0, 20, 1_000_000)
+
+t0 = time.perf_counter()
+slow = [math.exp(-0.25 * ti) for ti in t]
+t1 = time.perf_counter()
+
+print(f"loop:  {t1-t0:.3f} s")
+```
+
+## Why not plain lists? {auto-animate="true"}
+
+- ...and once with NumPy
+```{python}
+import math, time
+import numpy as np
+
+t = np.linspace(0, 20, 1_000_000)
+
+t0 = time.perf_counter()
+slow = [math.exp(-0.25 * ti) for ti in t]
+t1 = time.perf_counter()
+fast = np.exp(-0.25 * t)
+t2 = time.perf_counter()
+
+print(f"loop:  {t1-t0:.3f} s")
+print(f"numpy: {t2-t1:.4f} s")
+print(f"speed-up: {(t1-t0)/(t2-t1):.0f}x")
+```
+
+. . .
+
+The loop runs in Python; `np.exp` runs a compiled C loop.
+
+## Array Creation {auto-animate="true"}
+
+- The most basic creation is simply conversion from a list
+
+```{python}
+import numpy as np
+```
+
+## Array Creation {auto-animate="true"}
+
+- One dimensional
+```{python}
+import numpy as np
+a1D = np.array([1, 2, 3, 4])
+print(a1D.shape)
+```
+
+## Array Creation {auto-animate="true"}
+
+- Two dimensional
+```{python}
+import numpy as np
+a1D = np.array([1, 2, 3, 4])
+a2D = np.array([[1, 2], [3, 4]])
+print(a1D.shape, a2D.shape)
+```
+
+## Array Creation {auto-animate="true"}
+
+- Three dimensional
+```{python}
+import numpy as np
+a1D = np.array([1, 2, 3, 4])
+a2D = np.array([[1, 2], [3, 4]])
+a3D = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
+print(a1D.shape, a2D.shape, a3D.shape)
+```
+
+## Array Creation {auto-animate="true"}
+
+- More often, you generate arrays directly
+- NumPy functions can create arrays filled with zeros
+
+```{python}
+print(np.zeros((2, 3)))       # filled with 0.0
+```
+
+## Array Creation {auto-animate="true"}
+
+- More often, you generate arrays directly
+- NumPy functions can create arrays filled with ones
+
+```{python}
+print(np.zeros((2, 3)))       # filled with 0.0
+print(np.ones(4))             # filled with 1.0
+```
+
+## Array Creation {auto-animate="true"}
+
+- More often, you generate arrays directly
+- NumPy functions can create evenly spaced values, given the step
+
+```{python}
+print(np.zeros((2, 3)))       # filled with 0.0
+print(np.ones(4))             # filled with 1.0
+print(np.arange(0, 10, 2))    # like range(): step, end excluded
+```
+
+## Array Creation {auto-animate="true"}
+
+- More often, you generate arrays directly
+- NumPy functions can create evenly spaced values, given their number
+
+```{python}
+print(np.zeros((2, 3)))       # filled with 0.0
+print(np.ones(4))             # filled with 1.0
+print(np.arange(0, 10, 2))    # like range(): step, end excluded
+print(np.linspace(0, 1, 5))   # like seq(): n points, end included
+```
+
+## Special arrays {auto-animate="true"}
+
+- Uniformly distributed (*pseudo*)random numbers, from a seeded generator
+
+```{python}
+rng = np.random.default_rng(0)     # same seed -> same numbers
+print(rng.uniform(0, 1, (2, 2)))   # low, high, shape (n, m)
+```
+
+## Special arrays {auto-animate="true"}
+
+- Diagonal matrices, given the diagonal
+
+```{python}
+rng = np.random.default_rng(0)     # same seed -> same numbers
+print(rng.uniform(0, 1, (2, 2)))   # low, high, shape (n, m)
+print(np.diag([1, 2, 3]))          # diagonal elements -> matrix
+```
+
+## Special arrays {auto-animate="true"}
+
+- Identity, and arrays shaped like another one
+
+```{python}
+rng = np.random.default_rng(0)     # same seed -> same numbers
+print(rng.uniform(0, 1, (2, 2)))   # low, high, shape (n, m)
+print(np.diag([1, 2, 3]))          # diagonal elements -> matrix
+print(np.eye(2))                   # identity matrix
+print(np.zeros_like(np.diag([1, 2])))  # same shape and dtype, zeros
+```
+
+## Every array knows itself {auto-animate="true"}
+
+:::{.incremental}
+- A NumPy array is more than just a collection of values:
+    - It is an object with its own attributes and properties.
+    - You can inspect these properties at any time to understand the array's structure and contents.
+:::
+
+## Every array knows itself {auto-animate="true"}
+
+- Shape: the size along each dimension
+```{python}
+a = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+
+print("shape:", a.shape)     # (2, 3): rows and columns
+```
+
+## Every array knows itself {auto-animate="true"}
+
+- Number of dimensions
+```{python}
+a = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+
+print("shape:", a.shape)     # (2, 3): rows and columns
+print("ndim: ", a.ndim)      # Number of dimensions
+```
+
+## Every array knows itself {auto-animate="true"}
+
+- Data type: one for the whole array
+```{python}
+a = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+
+print("shape:", a.shape)     # (2, 3): rows and columns
+print("ndim: ", a.ndim)      # Number of dimensions
+print("dtype:", a.dtype)     # Data type of each element
+```
+
+## Every array knows itself {auto-animate="true"}
+
+- Size: total number of elements
+```{python}
+a = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+
+print("shape:", a.shape)     # (2, 3): rows and columns
+print("ndim: ", a.ndim)      # Number of dimensions
+print("dtype:", a.dtype)     # Data type of each element
+print("size: ", a.size)      # Total number of elements
+```
+
+## Indexing {auto-animate="true"}
+
+:::{.incremental}
+- Remember that in Python indexing starts from zero
+- You can access elements by enclosing the index in square brackets
+    - The last element is -1
+    - Negative numbers count from the end
+- Multiple elements can be selected through slicing
+:::
+
+
+## Indexing {auto-animate="true"}
+
+- First, last, slices
+```{python}
+a = np.arange(10)
+print(a[0], a[-1])           # first, last
+print(a[2:5])                # slice: stop excluded
+print(a[::2])                # every second element
+```
+
+## Indexing {auto-animate="true"}
+
+- In 2D: one index per dimension, `:` means "all"
+```{python}
+a = np.arange(10)
+print(a[0], a[-1])           # first, last
+print(a[2:5])                # slice: stop excluded
+print(a[::2])                # every second element
+
+M = np.arange(12).reshape(3, 4)
+print(M[1, 2])               # row 1, column 2
+print(M[:, 0])               # whole first column
+```
+
+## Indexing {auto-animate="true"}
+
+- Select by condition or by a list of positions
+```{python}
+M = np.arange(12).reshape(3, 4)
+print(M[1, 2])               # row 1, column 2
+print(M[:, 0])               # whole first column
+
+conc = np.array([0.9, 0.4, 1.3, 0.05, 0.7])
+print(conc[conc > 0.5])      # boolean mask
+print(conc[[0, 2]])          # "fancy": list of positions
+```
+
+## Views vs copies {auto-animate="true"}
+
+- Take a slice of an array
+```{python}
+a = np.arange(5)
+s = a[1:3]        # a slice is a VIEW of a
+```
+
+## Views vs copies {auto-animate="true"}
+
+- Modify the slice...
+```{python}
+a = np.arange(5)
+s = a[1:3]        # a slice is a VIEW of a
+s[0] = 100
+print(a)
+```
+
+## Views vs copies {auto-animate="true"}
+
+- ...and the original changed too: copy explicitly when you need independence
+```{python}
+a = np.arange(5)
+s = a[1:3]        # a slice is a VIEW of a
+s[0] = 100
+print(a)
+
+c = a[1:3].copy() # explicit copy if you need independence
+```
+
+. . .
+
+Fast and memory-efficient, but a frequent source of surprises (the NumPy cousin of trap #1).
+
+## Broadcasting {auto-animate="true"}
+
+::: {.incremental}
+- Arithmetic between arrays of different shapes, without writing loops
+- Shapes are compared from the right: two dimensions fit if they are equal or one of them is 1
+- A dimension of size 1 is stretched to match the other (no copy is made)
+- `x[:, None]` adds a dimension of size 1: shape `(4,)` becomes `(4, 1)`
+:::
+
+## Broadcasting {auto-animate="true"}
+
+::: {.incremental}
+- We want to calculate decay over time $$A(t)=e^{-kt}$$ for four different *k*s
+    - One time axis, four rate constants
+:::
+
+## Broadcasting {auto-animate="true"}
+
+- We want to calculate decay over time $$A(t)=e^{-kt}$$ for four different *k*s
+    - One time axis, four rate constants
+
+```{python}
+t = np.linspace(0, 20, 200)          # (200,)
+k = np.array([0.1, 0.25, 0.5, 1.0])  # (4,)
+```
+
+
+## Broadcasting {auto-animate="true"}
+
+- All four decays in one line
+```{python}
+#| error: true
+
+t = np.linspace(0, 20, 200)
+k = np.array([0.1, 0.25, 0.5, 1.0])
+
+A = np.exp(-k[:] * t)
+print(A.shape)
+```
+
+## Broadcasting {auto-animate="true"}
+
+- All four decays in one line
+```{python}
+#| error: true
+
+t = np.linspace(0, 20, 200)
+k = np.array([0.1, 0.25, 0.5, 1.0])
+
+A = np.exp(-k[:, None] * t)
+print(A.shape)
+```
+
+## Broadcasting {auto-animate="true"}
+
+- One row per rate constant
+```{python}
+#| output-location: column
+t = np.linspace(0, 20, 200)          # (200,)
+k = np.array([0.1, 0.25, 0.5, 1.0])  # (4,)
+
+A = np.exp(-k[:, None] * t)  # (4,1)*(200,) -> (4,200)
+print(A.shape)
+
+fig, ax = plt.subplots()
+for ki, Ai in zip(k, A):     # one row per k
+    ax.plot(t, Ai, label=f"k = {ki}")
+ax.set_xlabel("t / s"); ax.set_ylabel("[A] / M")
+ax.legend();
+```
+
+## I/O Basics {auto-animate="true"}
+
+- Text files: human-readable, portable
+```{python}
+data = np.column_stack([t, A[1]])
+
+# text: human-readable
+np.savetxt("decay.csv", data, delimiter=",",
+           header="t_s,A_M", comments="")
+back = np.loadtxt("decay.csv", delimiter=",", skiprows=1)
+```
+
+## I/O Basics {auto-animate="true"}
+
+- Binary `.npy`: exact and fast
+```{python}
+data = np.column_stack([t, A[1]])
+
+# text: human-readable
+np.savetxt("decay.csv", data, delimiter=",",
+           header="t_s,A_M", comments="")
+back = np.loadtxt("decay.csv", delimiter=",", skiprows=1)
+
+# binary: exact and fast
+np.save("decay.npy", data)
+back2 = np.load("decay.npy")
+
+print(back.shape, np.allclose(back, back2))
+```
+
+. . .
+
+For real lab data with headers, units and missing values: `pandas.read_csv` / `read_excel` (see the pandas section).
+
+# Matplotlib
+
+::: {.incremental}
+- The standard plotting library [@hunter2007matplotlib]
+- Two ways to use it
+    - `plt.plot(...)`: quick, implicit "current figure"
+    - `fig, ax = plt.subplots()`: explicit objects, **use this one**
+- Everything is customisable; the defaults get you 90 % of the way
+:::
+
+## Anatomy of a figure {auto-animate="true"}
+
+::: {.incremental}
+- **Figure**: the whole canvas (the page)
+- **Axes**: one plot inside it, with its own x/y axis
+- One figure can hold many axes
+:::
+
+## Anatomy of a figure {auto-animate="true"}
+
+- `plt.subplots()` returns both: the Figure and its Axes
+```{python}
+#| output-location: column
+fig, ax = plt.subplots()
+ax.text(0.5, 0.5, "this is an Axes", ha="center")
+fig.suptitle("this is the Figure");
+```
+
+## Your first plot {auto-animate="true"}
+
+- Create a figure and draw a line
+```{python}
+#| output-location: column
+t = np.linspace(0, 20, 200)
+
+fig, ax = plt.subplots()
+ax.plot(t, np.exp(-0.25 * t));
+```
+
+## Your first plot {auto-animate="true"}
+
+- Always label the axes, with units
+```{python}
+#| output-location: column
+t = np.linspace(0, 20, 200)
+
+fig, ax = plt.subplots()
+ax.plot(t, np.exp(-0.25 * t))
+ax.set_xlabel("t / s")
+ax.set_ylabel("[A] / M");
+```
+
+## Your first plot {auto-animate="true"}
+
+- Add more lines, give them labels, show a legend
+```{python}
+#| output-location: column
+t = np.linspace(0, 20, 200)
+
+fig, ax = plt.subplots()
+ax.plot(t, np.exp(-0.25 * t), label="k = 0.25")
+ax.plot(t, np.exp(-0.5 * t), label="k = 0.5")
+ax.set_xlabel("t / s")
+ax.set_ylabel("[A] / M")
+ax.legend();
+```
+
+## Your first plot {auto-animate="true"}
+
+- Style: line types, markers for data, a title
+```{python}
+#| output-location: column
+t = np.linspace(0, 20, 200)
+t_d = np.arange(0, 20, 2.0)
+
+fig, ax = plt.subplots()
+ax.plot(t, np.exp(-0.25 * t), label="k = 0.25")
+ax.plot(t, np.exp(-0.5 * t), "--", label="k = 0.5")
+ax.plot(t_d, np.exp(-0.25 * t_d), "o", label="data")
+ax.set_xlabel("t / s")
+ax.set_ylabel("[A] / M")
+ax.set_title("First-order decay")
+ax.legend();
+```
+
+## Your first plot {auto-animate="true"}
+
+- Labels accept LaTeX syntax (these labels are just a demonstration)
+```{python}
+#| output-location: column
+t = np.linspace(0, 20, 200)
+t_d = np.arange(0, 20, 2.0)
+
+fig, ax = plt.subplots()
+ax.plot(t, np.exp(-0.25 * t), label="k = 0.25")
+ax.plot(t, np.exp(-0.5 * t), "--", label="k = 0.5")
+ax.plot(t_d, np.exp(-0.25 * t_d), "o", label="data")
+ax.set_xlabel(r"$\gamma$")
+ax.set_ylabel(r"$\int \mathcal{D}x \,"
+              r"\exp\left(-i\hbar\int dx\,\mathcal{L}\right)$")
+ax.set_title("First-order decay")
+ax.legend();
+```
+
+## Your first plot {auto-animate="true"}
+
+- Log scale: first-order decay becomes a straight line
+```{python}
+#| output-location: column
+t = np.linspace(0, 20, 200)
+t_d = np.arange(0, 20, 2.0)
+
+fig, ax = plt.subplots()
+ax.plot(t, np.exp(-0.25 * t), label="k = 0.25")
+ax.plot(t, np.exp(-0.5 * t), "--", label="k = 0.5")
+ax.plot(t_d, np.exp(-0.25 * t_d), "o", label="data")
+ax.set_xlabel("t / s")
+ax.set_ylabel("[A] / M")
+ax.set_title("First-order decay")
+ax.set_yscale("log")
+ax.legend();
+```
+
+## Several panels {auto-animate="true"}
+
+- `subplots(rows, cols)` returns an array of axes
+- Useful for plotting multiple data
+```{python}
+#| output-location: column
+fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+```
+
+## Several panels {auto-animate="true"}
+
+- Typical use: data + fit on top, residuals below
+```{python}
+#| output-location: column
+rng = np.random.default_rng(0)
+noise = 0.02 * rng.standard_normal(t_d.size)
+y_d = np.exp(-0.25 * t_d) + noise
+y_fit = np.exp(-0.25 * t_d)
+
+fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+ax1.plot(t_d, y_d, "o")
+ax1.plot(t, np.exp(-0.25 * t))
+ax1.set_ylabel("[A] / M")
+ax2.plot(t_d, y_d - y_fit, "o")
+ax2.axhline(0, color="gray")
+ax2.set_ylabel("residual")
+ax2.set_xlabel("t / s");
+```
+
+## The plots you'll actually need {auto-animate="true"}
+
+- A grid of axes, indexed like a 2D array: `axs[row, col]`
+- Histogram: distribution of values
+```{python}
+#| output-location: column
+fig, axs = plt.subplots(2, 2, figsize=(6, 4))
+
+x = rng.normal(size=300)
+axs[0, 0].hist(x, bins=30)
+axs[0, 0].set_title("hist")
+fig.tight_layout()
+```
+
+## The plots you'll actually need {auto-animate="true"}
+
+- Scatter: one variable against another
+```{python}
+#| output-location: column
+fig, axs = plt.subplots(2, 2, figsize=(6, 4))
+
+x = rng.normal(size=300)
+axs[0, 0].hist(x, bins=30)
+axs[0, 0].set_title("hist")
+
+axs[0, 1].scatter(x[:-1], x[1:], s=5)
+axs[0, 1].set_title("scatter")
+fig.tight_layout()
+```
+
+## The plots you'll actually need {auto-animate="true"}
+
+- Error bars: measurements with uncertainties
+```{python}
+#| output-location: column
+fig, axs = plt.subplots(2, 2, figsize=(6, 4))
+
+x = rng.normal(size=300)
+axs[0, 0].hist(x, bins=30)
+axs[0, 0].set_title("hist")
+
+axs[0, 1].scatter(x[:-1], x[1:], s=5)
+axs[0, 1].set_title("scatter")
+
+axs[1, 0].errorbar(t_d, y_d, yerr=0.02, fmt="o")
+axs[1, 0].set_title("errorbar")
+fig.tight_layout()
+```
+
+## The plots you'll actually need {auto-animate="true"}
+
+- Images and 2D maps, with a colour bar
+```{python}
+#| output-location: column
+fig, axs = plt.subplots(2, 2, figsize=(6, 4))
+
+x = rng.normal(size=300)
+axs[0, 0].hist(x, bins=30)
+axs[0, 0].set_title("hist")
+
+axs[0, 1].scatter(x[:-1], x[1:], s=5)
+axs[0, 1].set_title("scatter")
+
+axs[1, 0].errorbar(t_d, y_d, yerr=0.02, fmt="o")
+axs[1, 0].set_title("errorbar")
+
+im = axs[1, 1].imshow(np.outer(np.sin(t), np.cos(t)))
+axs[1, 1].set_title("imshow")
+fig.colorbar(im, ax=axs[1, 1])
+fig.tight_layout()
+```
+
+## Saving figures
+
+```python
+fig.savefig("decay.pdf")              # vector: papers, theses, slides
+fig.savefig("decay.png", dpi=300)     # raster: web, quick previews
+fig.savefig("decay.svg")              # vector, editable in Inkscape
+```
+
+::: {.incremental}
+- Prefer **vector** formats (PDF, SVG) for anything printed
+    - If raster use a high DPI
+- Save from code, not by screenshot: the figure is then reproducible
+:::
+
+# SciPy
+
+::: {.incremental}
+- Algorithms built on NumPy arrays [@virtanen2020scipy]
+- `scipy.integrate`: ODEs, numerical integration
+- `scipy.optimize`: fitting, minimisation, root finding
+- `scipy.stats`: distributions, tests, regression
+- `scipy.linalg`: linear algebra
+- `scipy.constants`: physical constants
+- `scipy.special`: special functions
+:::
+
+## Constants, for free {auto-animate="true"}
+
+- CODATA values, in SI units
+```{python}
+from scipy import constants as c
+
+print(c.R, c.k, c.N_A, c.h)
+```
+
+## Constants, for free {auto-animate="true"}
+
+- With units and uncertainty: `(value, unit, uncertainty)`
+```{python}
+from scipy import constants as c
+
+print(c.R, c.k, c.N_A, c.h)
+print(c.physical_constants["Boltzmann constant in eV/K"])
+```
+
+## Solving ODEs: A → B → C {auto-animate="true"}
+
+- Example: consecutive first-order reactions
+
+. . .
+
+$$
+\begin{aligned}
+\frac{dA}{dt} &= -k_1 A \\
+\frac{dB}{dt} &= k_1 A - k_2 B \\
+\frac{dC}{dt} &= k_2 B
+\end{aligned}
+$$
+
+. . .
+
+- Initial conditions: $A(0) = 1, \; B(0) = 0, \; C(0) = 0$
+
+## Solving ODEs: A → B → C {auto-animate="true"}
+
+- Write the right-hand side $dy/dt = f(t, y)$
+```{python}
+#| output-location: column
+from scipy.integrate import solve_ivp
+
+def rhs(t, y, k1, k2):
+    A, B, C = y
+    return [-k1*A, k1*A - k2*B, k2*B]
+```
+
+## Solving ODEs: A → B → C {auto-animate="true"}
+
+- Hand it to the solver with initial conditions
+```{python}
+#| output-location: column
+from scipy.integrate import solve_ivp
+
+def rhs(t, y, k1, k2):
+    A, B, C = y
+    return [-k1*A, k1*A - k2*B, k2*B]
+
+sol = solve_ivp(rhs, (0, 40), [1, 0, 0],
+                args=(0.5, 0.15),
+                t_eval=np.linspace(0, 40, 400))
+print(sol.y.shape)
+```
+
+## Solving ODEs: A → B → C {auto-animate="true"}
+
+- Plot each species
+```{python}
+#| output-location: column
+from scipy.integrate import solve_ivp
+
+def rhs(t, y, k1, k2):
+    A, B, C = y
+    return [-k1*A, k1*A - k2*B, k2*B]
+
+sol = solve_ivp(rhs, (0, 40), [1, 0, 0],
+                args=(0.5, 0.15),
+                t_eval=np.linspace(0, 40, 400))
+print(sol.y.shape)
+
+fig, ax = plt.subplots()
+for name, y in zip("ABC", sol.y):
+    ax.plot(sol.t, y, label=name)
+ax.set_xlabel("t / s"); ax.set_ylabel("concentration / M")
+ax.legend();
+```
+
+## Fitting a model to data {auto-animate="true"}
+
+- Some noisy "measurements"
+```{python}
+#| output-location: column
+from scipy.optimize import curve_fit
+
+rng = np.random.default_rng(42)
+t_d = np.arange(0, 30, 2.0)
+y_d = np.exp(-0.18 * t_d) \
+      * (1 + 0.03 * rng.standard_normal(t_d.size))
+
+fig, ax = plt.subplots()
+ax.plot(t_d, y_d, "o")
+ax.set_xlabel("t / s"); ax.set_ylabel("[A] / M");
+```
+
+## Fitting a model to data {auto-animate="true"}
+
+- Define the model, fit, get uncertainties
+```{python}
+#| output-location: column
+from scipy.optimize import curve_fit
+
+rng = np.random.default_rng(42)
+t_d = np.arange(0, 30, 2.0)
+y_d = np.exp(-0.18 * t_d) \
+      * (1 + 0.03 * rng.standard_normal(t_d.size))
+
+model = lambda t, A0, k: A0 * np.exp(-k * t)
+p, cov = curve_fit(model, t_d, y_d, p0=[1, 0.1])
+err = np.sqrt(np.diag(cov))
+print(f"k = {p[1]:.3f} ± {err[1]:.3f} 1/s")
+```
+
+## Fitting a model to data {auto-animate="true"}
+
+- Plot data and fit together
+```{python}
+#| output-location: column
+from scipy.optimize import curve_fit
+
+rng = np.random.default_rng(42)
+t_d = np.arange(0, 30, 2.0)
+y_d = np.exp(-0.18 * t_d) \
+      * (1 + 0.03 * rng.standard_normal(t_d.size))
+
+model = lambda t, A0, k: A0 * np.exp(-k * t)
+p, cov = curve_fit(model, t_d, y_d, p0=[1, 0.1])
+err = np.sqrt(np.diag(cov))
+
+fig, ax = plt.subplots()
+ax.plot(t_d, y_d, "o")
+ax.plot(t_d, model(t_d, *p))
+ax.set_xlabel("t / s"); ax.set_ylabel("[A] / M")
+ax.set_title(f"k = {p[1]:.3f} ± {err[1]:.3f} 1/s");
+```
+
+## Special Functions {auto-animate="true"}
+
+::: {.incremental}
+- `scipy.special`: the functions of mathematical physics, ready to use
+- Bessel, Airy, Legendre, Hermite, Laguerre, gamma, error function, ...
+- Vectorised like NumPy: pass an array, get an array
+:::
+
+## Special Functions {auto-animate="true"}
+
+- Bessel functions
+```{python}
+from scipy.special import jv
+jv(0, 1.)
+```
+
+## Special Functions {auto-animate="true"}
+
+- Airy functions
+```{python}
+#| output-location: column
+from scipy import special
+
+x = np.linspace(-15, 5, 201)
+ai, aip, bi, bip = special.airy(x)
+
+fig, ax = plt.subplots()
+ax.plot(x, ai, label="Ai(x)")
+ax.plot(x, bi, "--", label="Bi(x)")
+ax.set_ylim(-0.5, 1.0)
+ax.grid(alpha=0.3)
+ax.legend(loc="upper left");
+```
+
+## Special Functions {auto-animate="true"}
+
+- Legendre polynomials
+```{python}
+#| output-location: column
+from scipy.special import legendre
+
+x = np.linspace(-1, 1, 201)
+
+fig, ax = plt.subplots()
+for n in range(6):
+    P = legendre(n)
+    ax.plot(x, P(x), label=f"$P_{n}(x)$")
+
+ax.grid(alpha=0.3)
+ax.legend(loc="upper left", fontsize=8)
+ax.set_xlabel("$x$")
+ax.set_ylabel("$P_n(x)$");
+```
+
+## Special Functions {auto-animate="true"}
+
+- Many more... (click "Code" to see how)
+```{python}
+#| code-fold: true
+#| fig-width: 10
+#| fig-height: 3
+
+from scipy.special import (eval_chebyt, hermite,
+                           eval_laguerre)
+
+x = np.linspace(-1, 1, 500)
+
+fig, ax = plt.subplots(1, 3)
+
+# Chebyshev polynomials
+for n in range(5):
+    ax[0].plot(x, eval_chebyt(n, x), label=f'$T_{n}(x)$')
+ax[0].set_title('Chebyshev polynomials')
+
+# Hermite polynomials
+for n in range(4):
+    ax[1].plot(x, hermite(n)(x), label=f'$H_{n}(x)$')
+ax[1].set_title('Hermite polynomials')
+
+# Laguerre polynomials
+x_pos = np.linspace(0, 10, 500)
+for n in range(4):
+    ax[2].plot(x_pos, eval_laguerre(n, x_pos),
+               label=f'$L_{n}(x)$')
+ax[2].set_title('Laguerre polynomials')
+
+for a in ax:
+    a.grid(alpha=0.3)
+    a.legend(fontsize=7)
+    a.set_xlabel('$x$')
+
+fig.tight_layout()
+```
+
+# pandas
+
+::: {.incremental}
+- Labelled tables (`DataFrame`) built on NumPy arrays [@mckinney2010pandas]
+- Columns have names (put the units in them!), rows have an index
+- Reads CSV, Excel, HDF5, ... in one line
+:::
+
+## A table from a file {auto-animate="true"}
+
+- Read back the file we wrote in the NumPy section
+```{python}
+import pandas as pd
+
+df = pd.read_csv("decay.csv")
+df.head(3)
+```
+
+## Columns and rows {auto-animate="true"}
+
+- Every column has a name
+```{python}
+import pandas as pd
+
+df = pd.read_csv("decay.csv")
+print(df.columns.tolist())
+```
+
+## Columns and rows {auto-animate="true"}
+
+- Select rows with a boolean mask, exactly as in NumPy
+```{python}
+import pandas as pd
+
+df = pd.read_csv("decay.csv")
+print(df.columns.tolist())
+
+early = df[df.t_s < 1.0]          # boolean mask
+print(len(df), len(early))
+```
+
+## Columns and rows {auto-animate="true"}
+
+- New columns are vectorised
+```{python}
+import pandas as pd
+
+df = pd.read_csv("decay.csv")
+print(df.columns.tolist())
+
+early = df[df.t_s < 1.0]          # boolean mask
+print(len(df), len(early))
+
+df["ln_A"] = np.log(df.A_M)       # new column
+```
+
+## Columns and rows {auto-animate="true"}
+
+- Mind the brackets: scikit-learn wants `X` 2D and `y` 1D
+```{python}
+import pandas as pd
+
+df = pd.read_csv("decay.csv")
+print(df.columns.tolist())
+
+early = df[df.t_s < 1.0]          # boolean mask
+print(len(df), len(early))
+
+df["ln_A"] = np.log(df.A_M)       # new column
+print(df["A_M"].shape)            # one name   -> Series, 1D
+print(df[["t_s", "A_M"]].shape)   # list of names -> DataFrame, 2D
+```
+
+# scikit-learn
+
+::: {.incremental}
+- Machine learning with one consistent interface [@pedregosa2011scikit]
+- Every model is an **estimator**, used in the same three steps
+- `X` is always 2D: (samples, features); `y` is 1D
+:::
+
+## The estimator interface {auto-animate="true"}
+
+- Create the model, choosing its options
+```python
+model = SomeModel(options)
+```
+
+## The estimator interface {auto-animate="true"}
+
+- Learn the parameters from the training data
+```python
+model = SomeModel(options)
+model.fit(X_train, y_train)
+```
+
+## The estimator interface {auto-animate="true"}
+
+- Predict new data, and score the predictions
+```python
+model = SomeModel(options)
+model.fit(X_train, y_train)
+model.predict(X_new)
+model.score(X_test, y_test)
+```
+
+. . .
+
+Swap `SomeModel` for any other estimator: the rest of the code does not change.
+
+## Train, then test
+
+::: {.incremental}
+- Fit on a **training set**, judge on a **test set** the model has never seen
+- Training error: how well the model *describes* the data it saw
+- Test error: how well it *predicts*, which is the point of the exercise
+- Never report a training error as if it were a prediction
+:::
+
+## Regression: alkane boiling points {auto-animate="true"}
+
+- Boiling points of the n-alkanes, C1 to C20
+```{python}
+bp_C = [-161.5, -88.6, -42.1,  -0.5,  36.1,
+          68.7,  98.4, 125.6, 150.8, 174.1,
+         196.0, 216.3, 235.4, 253.5, 270.6,
+         286.8, 302.0, 316.3, 330.0, 343.0]
+df = pd.DataFrame({"n_C": range(1, 21),
+                   "bp_K": np.array(bp_C) + 273.15})
+```
+
+## Regression: alkane boiling points {auto-animate="true"}
+
+- Learn from C1–C12, predict C13–C20 (extrapolation: the hard case)
+```{python}
+bp_C = [-161.5, -88.6, -42.1,  -0.5,  36.1,
+          68.7,  98.4, 125.6, 150.8, 174.1,
+         196.0, 216.3, 235.4, 253.5, 270.6,
+         286.8, 302.0, 316.3, 330.0, 343.0]
+df = pd.DataFrame({"n_C": range(1, 21),
+                   "bp_K": np.array(bp_C) + 273.15})
+
+train = df[df.n_C <= 12]     # learn C1–C12
+test = df[df.n_C > 12]       # predict C13–C20
+
+X_tr, y_tr = train[["n_C"]], train["bp_K"]  # X: 2D [[ ]]
+X_te, y_te = test[["n_C"]], test["bp_K"]    # y: 1D [ ]
+```
+
+## A polynomial model {auto-animate="true"}
+
+::: {.incremental}
+- `PolynomialFeatures(deg)` turns $n$ into the columns $1, n, n^2, \dots, n^\mathrm{deg}$
+- `LinearRegression()` fits one coefficient per column
+- `make_pipeline` chains them into a single estimator: `fit` and `predict` run both steps
+:::
+
+## A polynomial model {auto-animate="true"}
+
+- Build it once, use it like any estimator
+```{python}
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import root_mean_squared_error as rmse
+
+def poly_model(deg):
+    return make_pipeline(PolynomialFeatures(deg),
+                         LinearRegression())
+
+n_all = pd.DataFrame({"n_C": np.linspace(1, 20, 200)})
+```
+
+## More flexible ≠ better {auto-animate="true"}
+
+- A straight line: right trend, systematically off
+```{python}
+#| output-location: column
+fig, ax = plt.subplots()
+ax.plot(df.n_C, df.bp_K, "wo", ms=3)
+for deg in (1,):
+    m = poly_model(deg).fit(X_tr, y_tr)
+    e_tr = rmse(y_tr, m.predict(X_tr))
+    e_te = rmse(y_te, m.predict(X_te))
+    ax.plot(n_all.n_C, m.predict(n_all),
+            label=f"deg {deg}: train {e_tr:.0f} K, "
+                  f"test {e_te:.0f} K")
+ax.axvspan(12.5, 20.5, alpha=0.15)   # test region
+ax.set_xlabel("carbon atoms")
+ax.set_ylabel(r"$T_\mathrm{b}$ / K")
+ax.set_ylim(0, 800); ax.legend(fontsize=8);
+```
+
+## More flexible ≠ better {auto-animate="true"}
+
+- A parabola: better on both sets
+```{python}
+#| output-location: column
+fig, ax = plt.subplots()
+ax.plot(df.n_C, df.bp_K, "wo", ms=3)
+for deg in (1, 2):
+    m = poly_model(deg).fit(X_tr, y_tr)
+    e_tr = rmse(y_tr, m.predict(X_tr))
+    e_te = rmse(y_te, m.predict(X_te))
+    ax.plot(n_all.n_C, m.predict(n_all),
+            label=f"deg {deg}: train {e_tr:.0f} K, "
+                  f"test {e_te:.0f} K")
+ax.axvspan(12.5, 20.5, alpha=0.15)   # test region
+ax.set_xlabel("carbon atoms")
+ax.set_ylabel(r"$T_\mathrm{b}$ / K")
+ax.set_ylim(0, 800); ax.legend(fontsize=8);
+```
+
+## More flexible ≠ better {auto-animate="true"}
+
+- Degree 4: best on the training data...
+```{python}
+#| output-location: column
+fig, ax = plt.subplots()
+ax.plot(df.n_C, df.bp_K, "wo", ms=3)
+for deg in (1, 2, 4):
+    m = poly_model(deg).fit(X_tr, y_tr)
+    e_tr = rmse(y_tr, m.predict(X_tr))
+    e_te = rmse(y_te, m.predict(X_te))
+    ax.plot(n_all.n_C, m.predict(n_all),
+            label=f"deg {deg}: train {e_tr:.0f} K, "
+                  f"test {e_te:.0f} K")
+ax.axvspan(12.5, 20.5, alpha=0.15)   # test region
+ax.set_xlabel("carbon atoms")
+ax.set_ylabel(r"$T_\mathrm{b}$ / K")
+ax.set_ylim(0, 800); ax.legend(fontsize=8);
+```
+
+. . .
+
+...worst on the test data.
+
+## Overfitting
+
+::: {.incremental}
+- Degree 1 → 2 → 4: training error 20 → 6 → 2 K
+- Test error 105 → 85 → **264 K**
+- Lower training error, worse predictions: **overfitting**
+- The flexible model learned the training points, not the trend
+:::
+
+## Why is ML difficult? {auto-animate="true"}
+
+The notebook takes this apart in a controlled setting [@mehta2019high]
+
+::: {.incremental}
+- Data you generate yourself: $y_i = f(x_i) + \eta_i$, noise of size $\sigma$
+- Models: polynomials of degree 1, 3 and 10
+- Judge: mean squared error on fresh test data, inside *and* outside the training range
+:::
+
+## Why is ML difficult? {auto-animate="true"}
+
+Knobs to turn
+
+::: {.incremental}
+- How many training points $N$?
+- How much noise $\sigma$?
+- Is the true $f$ inside the model class or not?
+:::
+
+# Jupyter Notebooks
+
+::: {.incremental}
+- Documents mixing **code**, **output**, and **text with LaTeX** [@kluyver2016jupyter]
+- Code runs in a **kernel**: a Python process that remembers what you ran
+- ...in the order *you ran it*, not the order on the page
+:::
+
+## Markdown cells
+
+::: {.incremental}
+- Every cell is either **code** or **Markdown**
+    - `Esc` → `M`: make it Markdown · `Esc` → `Y`: back to code
+    - `Shift+Enter` renders it · double-click to edit again
+- Markdown turns a notebook into a **lab notebook**: what you did, why, and what you concluded
+- Rule of thumb: a reader should follow the story *without* reading the code
+:::
+
+## Writing a Markdown cell {auto-animate="true"}
+
+:::: {.columns}
+::: {.column width="55%"}
+```markdown
+## Kinetics of A → B
+
+Measured at **298 K** in *ethanol*.
+```
+:::
+::: {.column width="45%"}
+::: {.md-preview}
+[Kinetics of A → B]{.md-h}
+
+Measured at **298 K** in *ethanol*.
+:::
+:::
+::::
+
+- Headings with `#`, `**bold**`, `*italic*`
+
+## Writing a Markdown cell {auto-animate="true"}
+
+:::: {.columns}
+::: {.column width="55%"}
+```markdown
+## Kinetics of A → B
+
+Measured at **298 K** in *ethanol*.
+
+- 3 runs, averaged
+- raw data in `decay.csv`
+```
+:::
+::: {.column width="45%"}
+::: {.md-preview}
+[Kinetics of A → B]{.md-h}
+
+Measured at **298 K** in *ethanol*.
+
+- 3 runs, averaged
+- raw data in `decay.csv`
+:::
+:::
+::::
+
+- Lists with `-`, inline code with backticks
+
+## Writing a Markdown cell {auto-animate="true"}
+
+:::: {.columns}
+::: {.column width="55%"}
+```markdown
+## Kinetics of A → B
+
+Measured at **298 K** in *ethanol*.
+
+- 3 runs, averaged
+- raw data in `decay.csv`
+
+Rate law: $[A] = [A]_0 e^{-kt}$, and
+
+$$
+k(T) = A\, e^{-E_a/RT}
+$$
+```
+:::
+::: {.column width="45%"}
+::: {.md-preview}
+[Kinetics of A → B]{.md-h}
+
+Measured at **298 K** in *ethanol*.
+
+- 3 runs, averaged
+- raw data in `decay.csv`
+
+Rate law: $[A] = [A]_0 e^{-kt}$, and
+
+$$
+k(T) = A\, e^{-E_a/RT}
+$$
+:::
+:::
+::::
+
+- LaTeX: `$...$` inline, `$$...$$` displayed
+
+## Writing a Markdown cell {auto-animate="true"}
+
+:::: {.columns}
+::: {.column width="55%"}
+```markdown
+| run | k / s⁻¹ |
+|-----|---------|
+| 1   | 0.181   |
+| 2   | 0.179   |
+
+Method from the
+[SciPy docs](https://docs.scipy.org).
+```
+:::
+::: {.column width="45%"}
+::: {.md-preview}
+| run | k / s⁻¹ |
+|-----|---------|
+| 1   | 0.181   |
+| 2   | 0.179   |
+
+Method from the
+[SciPy docs](https://docs.scipy.org).
+:::
+:::
+::::
+
+- Tables with `|`, links with `[text](url)`, images with `![alt](file.png)`
+
+## Markdown cheat sheet {.smaller}
+
+| You type | You get |
+|---|---|
+| `# Title`, `## Section` | headings |
+| `**bold**`, `*italic*` | **bold**, *italic* |
+| `- item` / `1. item` | bullet / numbered list |
+| `` `code` `` | `code` |
+| `$E = mc^2$` | $E = mc^2$ |
+| `$$\int_0^\infty e^{-x}dx$$` | displayed equation |
+| `[text](url)` | link |
+| `![alt](plot.png)` | image |
+| `> note` | quote / callout |
+
+## The hidden-state trap {auto-animate="true"}
+
+- Cell 1 sets a value
+```python
+x = 10          # cell 1
+```
+
+## The hidden-state trap {auto-animate="true"}
+
+- Cell 2 uses it: run it three times...
+```python
+x = 10          # cell 1
+```
+
+```python
+x = x * 2       # cell 2: run it three times...
+print(x)        # ...prints 80, though the page "says" 20
+```
+
+. . .
+
+**Rule:** *Kernel → Restart & Run All* before you trust a result.
+
+## Survival kit {.smaller}
+
+| Keys | Action |
+|---|---|
+| `Shift+Enter` | run cell, move on |
+| `Esc` → `A` / `B` | new cell above / below |
+| `Esc` → `M` / `Y` | Markdown / code cell |
+| `Esc` → `D`, `D` | delete cell |
+| `Tab`, `Shift+Tab` | autocomplete, show docs |
+| `?np.linspace` | help |
+
+## Where to run it
+
+::: {.incremental}
+- **JupyterLab** or **VS Code** on your own machine
+- **Google Colab**: nothing to install
+- In this course: the **BW JupyterHub**
+:::
+
+## Hands-on
+
+Open `NB_CII-ML_is_difficult_exercise.ipynb`
+
+::: {.incremental}
+- ★ warm-up: functions, arrays and a first plot of noisy data
+- ★★ core: fit polynomials, test them, then change $N$, $\sigma$ and the true $f$
+- ★★★ if you're ahead: learning curves, `curve_fit` with the right features, back to the alkanes
+- Answer the questions in Markdown cells; *Restart & Run All* before you hand it in
+:::
+
+## References {.smaller}
+
+::: {#refs}
+:::
